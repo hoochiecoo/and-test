@@ -4,20 +4,32 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mobiledevops/flutter-sdk-image:latest
-      options: --user root # Запускаем контейнер от имени root, чтобы избежать проблем с правами и git safe.directory
+      # Устанавливаем рабочую директорию контейнера по умолчанию в /github/workspace
+      # (куда actions/checkout клонирует репозиторий)
+      # Это помогает убедиться, что все последующие команды запускаются оттуда.
+      working_directory: /github/workspace 
+      options: --user root # Продолжаем запускать от root для обхода проблем с правами
 
     steps:
     - uses: actions/checkout@v4
-    - name: Configure Git safe directory
-      run: git config --global --add safe.directory /home/mobiledevops/.flutter-sdk
-      
+      # Если ваш Flutter-проект находится не в корне репозитория,
+      # например, в 'my-flutter-app/', то раскомментируйте и измените path:
+      # with:
+      #   path: my-flutter-app/
+
+    # Если проблема "dubious ownership" все еще проявляется, раскомментируйте этот шаг
+    # - name: Configure Git safe directory
+    #   run: git config --global --add safe.directory /home/mobiledevops/.flutter-sdk
+    #   working-directory: /github/workspace # Важно выполнить это в правильной директории
+
     - name: Get Flutter dependencies
       run: flutter pub get
-      working-directory: ${{ github.workspace }} # Указываем корневую директорию проекта
+      # working-directory: ${{ github.workspace }} # Теперь это не обязательно, т.к. установлено в container.working_directory
 
     - name: Build Android APK
-      run: flutter build apk --debug
-      working-directory: ${{ github.workspace }} # Указываем корневую директорию проекта
+      # Явно указываем путь к проекту для flutter build
+      run: flutter build apk --debug --project-directory="${{ github.workspace }}"
+      # working-directory: ${{ github.workspace }} # Также не обязательно
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
