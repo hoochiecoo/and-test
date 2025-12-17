@@ -3,25 +3,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container: # Используем контейнер вместо ubuntu-latest и установки Flutter/Java вручную
-      image: mobidevops/flutter-sdk-image:latest # или конкретная версия, например, 3.19.0
-      # Если ваш проект требует доступа к Android SDK для сборки,
-      # вам может понадобиться смонтировать Docker-сокет или другие пути.
-      # Но для большинства случаев сборки Flutter APK внутри этого образа это не требуется.
-      # options: --user root # Иногда полезно, если есть проблемы с правами
+      image: mobiledevops/flutter-sdk-image:latest # <-- Исправлено здесь!
+      # Используйте конкретную версию, например, mobiledevops/flutter-sdk-image:3.19.0
+      # options: --user root # Иногда полезно, если есть проблемы с правами доступа
     steps:
     - uses: actions/checkout@v4
-      # Если вы работаете внутри контейнера, то репозиторий будет склонирован в /github/workspace.
-      # Команды Flutter будут выполняться относительно этого пути.
-
-    # Эти шаги больше не нужны, так как образ уже содержит их:
-    # - uses: actions/setup-java@v4
-    #   with:
-    #     distribution: 'temurin'
-    #     java-version: '17'
-    # - uses: subosito/flutter-action@v2
-    #   with:
-    #     channel: 'stable'
-    #     cache: true
 
     - name: Get Flutter dependencies
       run: flutter pub get
