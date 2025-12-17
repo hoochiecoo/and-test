@@ -4,32 +4,29 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mobiledevops/flutter-sdk-image:latest
-      # Устанавливаем рабочую директорию контейнера по умолчанию в /github/workspace
-      # (куда actions/checkout клонирует репозиторий)
-      # Это помогает убедиться, что все последующие команды запускаются оттуда.
-      working_directory: /github/workspace 
-      options: --user root # Продолжаем запускать от root для обхода проблем с правами
+      options: --user root # Это оставляем для обхода проблем с правами и git dubious ownership
 
     steps:
     - uses: actions/checkout@v4
-      # Если ваш Flutter-проект находится не в корне репозитория,
-      # например, в 'my-flutter-app/', то раскомментируйте и измените path:
-      # with:
-      #   path: my-flutter-app/
 
-    # Если проблема "dubious ownership" все еще проявляется, раскомментируйте этот шаг
-    # - name: Configure Git safe directory
+    # Проблема 'dubious ownership' (если она еще возникает)
+    # Если запуск с '--user root' не помог решить проблему "dubious ownership",
+    # то этот шаг может быть необходим.
+    # Если вы используете '--user root', то владелец всех файлов внутри контейнера будет root,
+    # и Git не должен выдавать предупреждения о "dubious ownership" для файлов, принадлежащих root.
+    # - name: Configure Git safe directory (if needed)
     #   run: git config --global --add safe.directory /home/mobiledevops/.flutter-sdk
-    #   working-directory: /github/workspace # Важно выполнить это в правильной директории
+    #   working-directory: ${{ github.workspace }} # Выполняем из корня проекта
 
     - name: Get Flutter dependencies
       run: flutter pub get
-      # working-directory: ${{ github.workspace }} # Теперь это не обязательно, т.к. установлено в container.working_directory
+      working-directory: ${{ github.workspace }} # Явно указываем рабочую директорию для этого шага
 
     - name: Build Android APK
-      # Явно указываем путь к проекту для flutter build
+      # Ключевое решение для "Must provide Flutter source directory":
+      # Явно указываем Flutter CLI, где находится корень проекта.
       run: flutter build apk --debug --project-directory="${{ github.workspace }}"
-      # working-directory: ${{ github.workspace }} # Также не обязательно
+      working-directory: ${{ github.workspace }} # Явно указываем рабочую директорию для этого шага
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
